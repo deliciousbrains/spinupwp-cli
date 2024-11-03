@@ -29,7 +29,7 @@ trait SpecifyFields
         $this->applyFilter($fieldsFilter);
 
         collect($this->fieldsMap)->each(function (Field $field) use ($resource, &$fields) {
-            $label = $field->getDisplayLabel($this->displayFormat() === 'table');
+            $label = $field->getDisplayLabel($this->shouldShowNiceLabel());
 
             if (!property_exists($resource, $field->getName())) {
                 return;
@@ -73,7 +73,7 @@ trait SpecifyFields
     protected function applyFilter(?array $fieldsFilter): void
     {
         if (!empty($fieldsFilter)) {
-            $this->fieldsMap = array_filter($this->fieldsMap, fn (Field $field) => $field->isInFilter($fieldsFilter));
+            $this->fieldsMap = array_filter($this->fieldsMap, fn(Field $field) => $field->isInFilter($fieldsFilter));
         }
     }
 
@@ -81,6 +81,11 @@ trait SpecifyFields
     {
         $commandOptions = $this->config->getCommandConfiguration($this->name, $this->profile());
         return $this->option('fields') || (isset($commandOptions['fields']) && !empty($commandOptions['fields']));
+    }
+
+    protected function shouldShowNiceLabel(): bool
+    {
+        return in_array($this->displayFormat(), ['table', 'list']);
     }
 
     private function getCommandFieldsConfiguration(string $command, string $profile): ?array

@@ -1,10 +1,8 @@
 <?php
 
 use App\Repositories\ConfigRepository as Configuration;
-use App\Repositories\SpinupWpRepository;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Artisan;
-use LaravelZero\Framework\Kernel;
 use PHPUnit\Framework\ExpectationFailedException;
 
 $response = [
@@ -69,7 +67,7 @@ test('sites search prompts for search term', function () use ($response) {
         new Response(200, [], listResponseJson($response))
     );
 
-    $result = $this->artisan('sites:search --format table')
+    $this->artisan('sites:search --format table')
         ->expectsQuestion('Enter a search term', 'hellfish')
         ->expectsQuestion('Enter the number of the site to view', 1)
         ->expectsTable(
@@ -86,8 +84,7 @@ test('sites search prompts for search term', function () use ($response) {
                 ]
             ]
         )
-        ->expectsConfirmation('Do you want to SSH into this site?', 'yes')
-
+        ->expectsConfirmation('Do you want to SSH into hellfishmedia.com (hellfish)', 'yes')
         // It's possible that since we're running another command, that we accept this one as working and relly on sites:ssh tests to pass.
         ->expectsOutput('Establishing a secure connection to [hellfishmedia] as [hellfish]...')
         ->assertExitCode(0);

@@ -13,7 +13,8 @@ abstract class Sites extends BaseCommand
     protected function setUp(): void
     {
         $this->fieldsMap = [
-            (new Field('ID', 'id')),
+//            (new Field('ID', 'id')),
+            (new Field('Site ID', 'id')),
             (new Field('Server ID', 'server_id')),
             (new Field('Domain', 'domain')),
             (new Field('Additional Domains', 'additional_domains'))

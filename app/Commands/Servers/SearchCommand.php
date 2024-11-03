@@ -3,6 +3,7 @@
 namespace App\Commands\Servers;
 
 use App\Commands\Servers\Servers;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class SearchCommand extends Servers
@@ -12,10 +13,12 @@ class SearchCommand extends Servers
     protected $signature = 'servers:search
                             {keyword? : Your search term}
                             {--fields= : The fields to output}
-                            {--format= : The output format (json or table)}
+                            {--format= : The output format (list or table)}
                             {--profile= : The SpinupWP configuration profile to use}';
 
-    protected $description = 'List all servers';
+    protected $description = 'Search for a server';
+
+    private const SUPPORTED_FORMATS = ['table', 'list'];
 
     protected function action(): int
     {
@@ -28,15 +31,16 @@ class SearchCommand extends Servers
             return self::SUCCESS;
         }
 
-        $servers->transform(fn($server) => $this->specifyFields($server, [
-            'id',
-            'name',
-            'ip_address',
-            'ubuntu_version',
-            'database.server',
-        ]));
+        $servers->transform(
+            fn($server) => $this->specifyFields($server, [
+                'id',
+                'name',
+                'ip_address',
+                'ubuntu_version',
+                'database.server',
+            ]));
 
-        if ($this->displayFormat() !== 'table') {
+        if (!in_array($this->displayFormat(), self::SUPPORTED_FORMATS)) {
             $this->info("Format not supported");
             return self::FAILURE;
         }
@@ -46,17 +50,14 @@ class SearchCommand extends Servers
         return self::SUCCESS;
     }
 
-    protected function promptForSearch($servers)
+    protected function promptForSearch(Collection $servers): void
     {
         if (!$this->keyword) {
             $this->keyword = $this->ask('Enter a search term');
         }
 
         while (true) {
-            $filteredServers = $servers->filter(function ($server) {
-                return Str::contains($server['Name'], $this->keyword, true) ||
-                    Str::contains($server['IP Address'], $this->keyword, true);
-            })->values();
+            $filteredServers = $this->filterServers($servers);
 
             if ($filteredServers->isEmpty()) {
                 $this->info('No matching servers found.');
@@ -66,9 +67,13 @@ class SearchCommand extends Servers
 
             $this->info("Matching servers:");
 
-            $filteredServers->each(function ($server, $key) {
-                $this->line(sprintf("%d: %s (%s)", $key + 1, $server['Name'], $server['IP Address']));
-            });
+            if ($this->displayFormat() === 'table') {
+                $this->format($filteredServers);
+            } else {
+                $filteredServers->each(function ($server, $key) {
+                    $this->line(sprintf("%d: %s (%s)", $key + 1, $server['Name'], $server['IP Address']));
+                });
+            }
 
             if ($filteredServers->count() > 1) {
                 $selection = $this->ask('Enter the number of the server to view');
@@ -80,11 +85,8 @@ class SearchCommand extends Servers
 
                 if (is_numeric($selection) && $selection > 0 && $selection <= $filteredServers->count()) {
                     $selectedServer = $filteredServers[$selection - 1];
-                    $this->format(collect([$selectedServer]));
 
-                    if ($this->confirm('Do you want to SSH into this server?')) {
-                        $this->call('servers:ssh', ['server_id' => $selectedServer['ID']]);
-                    }
+                    $this->handleServerSelection($selectedServer);
 
                     break;
                 }
@@ -92,16 +94,33 @@ class SearchCommand extends Servers
 
             if ($filteredServers->count() === 1) {
                 $selectedServer = $filteredServers[0];
-                $this->format(collect([$selectedServer]));
 
-                if ($this->confirm('Do you want to SSH into this server?')) {
-                    $this->call('servers:ssh', ['server_id' => $selectedServer['ID']]);
-                }
+                $this->handleServerSelection($selectedServer);
 
                 break;
             }
 
             $this->error('Invalid selection. Please try again.');
+        }
+    }
+
+    private function filterServers(Collection $servers): Collection
+    {
+        return $servers->filter(function ($server) {
+            return Str::contains($server['Name'], $this->keyword, true) ||
+                Str::contains($server['IP Address'], $this->keyword, true);
+        })->values()->map(function ($site, $index) {
+            return array_merge(['Match' => $index + 1], $site);
+        });
+    }
+
+    private function handleServerSelection($selectedServer): void
+    {
+        if ($this->confirm(sprintf("Do you want to SSH into: %s (%s)",
+            $selectedServer['Name'],
+            $selectedServer['IP Address']
+        ))) {
+            $this->call('servers:ssh', ['server_id' => $selectedServer['Server ID']]);
         }
     }
 }

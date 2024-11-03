@@ -3,6 +3,7 @@
 namespace App\Commands\Sites;
 
 use App\Commands\Sites\Sites;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class SearchCommand extends Sites
@@ -13,10 +14,12 @@ class SearchCommand extends Sites
                             {keyword? : Your search term}
                             {server_id? : Only list sites belonging to this server}
                             {--fields= : The fields to output}
-                            {--format= : The output format (json or table)}
+                            {--format= : The output format (list or table)}
                             {--profile= : The SpinupWP configuration profile to use}';
 
-    protected $description = 'Retrieves a list of sites';
+    protected $description = 'Search for sites in your account on in a specific server';
+
+    private const SUPPORTED_FORMATS = ['table', 'list'];
 
     protected function action(): int
     {
@@ -47,7 +50,7 @@ class SearchCommand extends Sites
             ])
         );
 
-        if ($this->displayFormat() !== 'table') {
+        if (!in_array($this->displayFormat(), self::SUPPORTED_FORMATS)) {
             $this->info("Format not supported");
             return self::FAILURE;
         }
@@ -57,16 +60,14 @@ class SearchCommand extends Sites
         return self::SUCCESS;
     }
 
-    protected function promptForSearch($sites)
+    protected function promptForSearch(Collection $sites): void
     {
-        while (true) {
-            if (!$this->keyword) {
-                $this->keyword = $this->ask('Enter a search term');
-            }
+        if (!$this->keyword) {
+            $this->keyword = $this->ask('Enter a search term');
+        }
 
-            $filteredSites = $sites->filter(function ($site) {
-                return Str::contains($site['Domain'], $this->keyword, true) || Str::contains($site['Site User'], $this->keyword, true);
-            })->values();
+        while (true) {
+            $filteredSites = $this->filterSites($sites);
 
             if ($filteredSites->isEmpty()) {
                 $this->info('No matching sites found.');
@@ -76,9 +77,13 @@ class SearchCommand extends Sites
 
             $this->info("Matching sites:");
 
-            $filteredSites->each(function ($site, $key) {
-                $this->line(sprintf("%d: %s (%s)", $key + 1, $site['Domain'], $site['Site User']));
-            });
+            if ($this->displayFormat() === 'table') {
+                $this->format($filteredSites);
+            } else {
+                $filteredSites->each(function ($site, $key) {
+                    $this->line(sprintf("%d: %s (%s)", $key + 1, $site['Domain'], $site['Site User']));
+                });
+            }
 
             if ($filteredSites->count() > 1) {
                 $selection = $this->ask('Enter the number of the site to view');
@@ -91,11 +96,7 @@ class SearchCommand extends Sites
                 if (is_numeric($selection) && $selection > 0 && $selection <= $filteredSites->count()) {
                     $selectedSite = $filteredSites[$selection - 1];
 
-                    $this->format(collect([$selectedSite]));
-
-                    if ($this->confirm('Do you want to SSH into this site?')) {
-                        $this->call('site:ssh', ['site_id' => $selectedSite['ID']]);
-                    }
+                    $this->handleServerSelection($selectedSite);
 
                     break;
                 }
@@ -103,17 +104,34 @@ class SearchCommand extends Sites
 
             if ($filteredSites->count() === 1) {
                 $selectedSite = $filteredSites[0];
-                $this->format(collect([$selectedSite]));
 
-                if ($this->confirm('Do you want to SSH into this site?')) {
-                    $this->call('sites:ssh', ['site_id' => $selectedSite['ID']]);
-                }
+                $this->handleServerSelection($selectedSite);
 
                 break;
             }
 
-
             $this->error('Invalid selection. Please try again.');
         }
     }
+
+    private function filterSites(Collection $sites): Collection
+    {
+        return $sites->filter(function ($site) {
+            return Str::contains($site['Domain'], $this->keyword, true) ||
+                Str::contains($site['Site User'], $this->keyword, true);
+        })->values()->map(function ($site, $index) {
+            return array_merge(['Match' => $index + 1], $site);
+        });
+    }
+
+    private function handleServerSelection($selectedSite): void
+    {
+        if ($this->confirm(sprintf("Do you want to SSH into: %s (%s)",
+            $selectedSite['Domain'],
+            $selectedSite['Site User']
+        ))) {
+            $this->call('site:ssh', ['site_id' => $selectedSite['Site ID']]);
+        }
+    }
+
 }
