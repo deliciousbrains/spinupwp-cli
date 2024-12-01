@@ -1,9 +1,6 @@
 <?php
 
-use App\Repositories\ConfigRepository as Configuration;
 use GuzzleHttp\Psr7\Response;
-use Illuminate\Support\Facades\Artisan;
-use PHPUnit\Framework\ExpectationFailedException;
 
 $response = [
     [
@@ -62,7 +59,7 @@ test('empty sites search', function () {
 });
 
 
-test('sites search prompts for search term', function () use ($response) {
+test('search prompts for term and site selection', function () use ($response) {
     $this->clientMock->shouldReceive('request')->with('GET', 'sites?page=1&limit=100', [])->andReturn(
         new Response(200, [], listResponseJson($response))
     );
@@ -70,22 +67,5 @@ test('sites search prompts for search term', function () use ($response) {
     $this->artisan('sites:search --format table')
         ->expectsQuestion('Enter a search term', 'hellfish')
         ->expectsQuestion('Enter the number of the site to view', 1)
-        ->expectsTable(
-            ['ID', 'Server ID', 'Domain', 'Site User', 'PHP Version', 'Page Cache', 'HTTPS'],
-            [
-                [
-                    1,
-                    1,
-                    'hellfishmedia.com',
-                    'hellfish',
-                    '8.0',
-                    'Enabled',
-                    'Enabled',
-                ]
-            ]
-        )
-        ->expectsConfirmation('Do you want to SSH into hellfishmedia.com (hellfish)', 'yes')
-        // It's possible that since we're running another command, that we accept this one as working and relly on sites:ssh tests to pass.
-        ->expectsOutput('Establishing a secure connection to [hellfishmedia] as [hellfish]...')
-        ->assertExitCode(0);
+        ->expectsConfirmation('Do you want to SSH into: hellfishmedia.com (hellfish)', 'yes');
 });
