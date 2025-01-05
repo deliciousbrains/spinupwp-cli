@@ -58,7 +58,7 @@ test('servers table get command', function () use ($response) {
         new Response(200, [], json_encode(['data' => $response]))
     );
     $this->artisan('servers:get 1 --format=table')->expectsTable([], [
-        ['ID', '1'],
+        ['Server ID', '1'],
         ['Name', 'hellfish-media'],
         ['IP Address', '127.0.0.1'],
         ['Ubuntu', '20.04'],
@@ -73,7 +73,7 @@ test('servers table get specified columns and asks to save it in the config', fu
     $this->artisan('servers:get 1 --format=table --fields=id,name,ip_address')
         ->expectsConfirmation('Do you want to save the specified fields as the default for this command?', 'yes')
         ->expectsTable([], [
-            ['ID', '1'],
+            ['Server ID', '1'],
             ['Name', 'hellfish-media'],
             ['IP Address', '127.0.0.1'],
         ]);
@@ -88,7 +88,7 @@ test('servers table get only columns saved in the config', function () use ($res
 
     $this->artisan('servers:get 1 --format=table')
         ->expectsTable([], [
-            ['ID', '1'],
+            ['Server ID', '1'],
             ['Name', 'hellfish-media'],
         ]);
 

@@ -13,7 +13,7 @@ abstract class Servers extends BaseCommand
     protected function setup(): void
     {
         $this->fieldsMap = [
-            (new Field('ID', 'id')),
+            (new Field('Server ID', 'id')),
             (new Field('Name', 'name')),
             (new Field('Provider Name', 'provider_name')),
             (new Field('IP Address', 'ip_address')),
