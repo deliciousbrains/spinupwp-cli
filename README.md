@@ -13,7 +13,8 @@ To get started, require the package globally via [Composer](https://getcomposer.
 
     composer global require spinupwp/spinupwp-cli
 
-In addition, you should make sure the `/vendor/bin` directory in your global Composer home directory is in your system's "PATH". Depending on your operating system this could be either `~/.composer/` or `~/.config/composer/`. You can use the `composer config --global home` command to check this location.
+In addition, you should make sure the `/vendor/bin` directory in your global Composer home directory is in your system's "PATH". Depending on your operating system this could
+be either `~/.composer/` or `~/.config/composer/`. You can use the `composer config --global home` command to check this location.
 
 ## Usage
 
@@ -45,6 +46,11 @@ If no profile is supplied, your default profile will be used (if configured).
 
     # List all servers
     spinupwp servers:list --fields=id,name,ip_address,ubuntu_version,database.server
+
+    # Search all servers
+    spinupwp servers:search <ip_address>
+    spinupwp servers:search <server_name>
+    spinupwp servers:search <server_id>
 
     # Reboot a server
     spinupwp servers:reboot <server_id>
@@ -95,6 +101,11 @@ Nested properties should use dot notation, for example, `database.server`.
     # List all sites
     spinupwp sites:list --fields=id,server_id,domain,site_user,php_version,page_cache,https
 
+    # Search all sites
+    spinupwp sites:search domain.com
+    spinupwp sites:search <site_user>
+    spinupwp sites:search <site_id>
+
     # Purge the page cache for a site
     spinupwp sites:purge <site_id> --cache=page
 
@@ -112,7 +123,6 @@ Nested properties should use dot notation, for example, `database.server`.
 
 You can pass any properties of the [Site Schema](https://api.spinupwp.com/?shell#tocS_Site) to the `--fields` flag.
 Nested properties should use dot notation, for example, `backups.next_run_time` or `git.branch`.
-
 
     # Create a site using field flags instead of interactive prompts
     spinupwp sites:create <server_id> --installation-method="<installation_method>" \
