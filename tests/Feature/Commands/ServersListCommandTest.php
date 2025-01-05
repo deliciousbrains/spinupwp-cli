@@ -64,7 +64,7 @@ test('servers table list command', function () use ($response) {
         new Response(200, [], listResponseJson($response))
     );
     $this->artisan('servers:list --format table')->expectsTable(
-        ['ID', 'Name', 'IP Address', 'Ubuntu', 'Database Server'],
+        ['Server ID', 'Name', 'IP Address', 'Ubuntu', 'Database Server'],
         [
             [
                 '1',
@@ -89,7 +89,7 @@ test('servers table list with specified columns command and asks to save it in t
         new Response(200, [], listResponseJson($response))
     );
     $this->artisan('servers:list --format=table --fields=id,name,ip_address')->expectsConfirmation('Do you want to save the specified fields as the default for this command?', 'yes')->expectsTable(
-        ['ID', 'Name', 'IP Address'],
+        ['Server ID', 'Name', 'IP Address'],
         [
             [
                 '1',
@@ -115,7 +115,7 @@ test('servers table list only columns saved in the config', function () use ($re
     resolve(Configuration::class)->setCommandConfiguration('servers:list', 'fields', 'id,name');
 
     $this->artisan('servers:list --format=table')->expectsTable(
-        ['ID', 'Name'],
+        ['Server ID', 'Name'],
         [
             [
                 '1',

@@ -89,7 +89,7 @@ test('sites table get command', function () use ($response) {
         new Response(200, [], json_encode(['data' => $response]))
     );
     $this->artisan('sites:get 1 --format=table')->expectsTable([], [
-        ['ID', '1'],
+        ['Site ID', '1'],
         ['Server ID', '1'],
         ['Domain', 'hellfish.media'],
         ['Site User', 'hellfishmedia'],
@@ -131,7 +131,7 @@ test('site table get only columns saved in the config', function () use ($respon
 
     $this->artisan('sites:get 1 --format=table')
         ->expectsTable([], [
-            ['ID', '1'],
+            ['Site ID', '1'],
             ['Domain', 'hellfish.media'],
         ]);
 

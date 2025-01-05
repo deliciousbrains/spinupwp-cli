@@ -57,7 +57,7 @@ test('sites table list command', function () use ($response) {
         new Response(200, [], listResponseJson($response))
     );
     $this->artisan('sites:list --format table')->expectsTable(
-        ['ID', 'Server ID', 'Domain', 'Site User', 'PHP Version', 'Page Cache', 'HTTPS'],
+        ['Site ID', 'Server ID', 'Domain', 'Site User', 'PHP Version', 'Page Cache', 'HTTPS'],
         [
             [
                 1,
@@ -88,7 +88,7 @@ test('sites table list with specified columns command and asks to save it in the
     $this->artisan('sites:list --format table --fields=id,domain,site_user')
         ->expectsConfirmation('Do you want to save the specified fields as the default for this command?', 'yes')
         ->expectsTable(
-            ['ID', 'Domain', 'Site User'],
+            ['Site ID', 'Domain', 'Site User'],
             [
             [
                 1,
@@ -114,7 +114,7 @@ test('sites list only columns saved in the config', function () use ($response) 
     resolve(Configuration::class)->setCommandConfiguration('sites:list', 'fields', 'id,domain');
 
     $this->artisan('sites:list --format=table')->expectsTable(
-        ['ID', 'Domain'],
+        ['Site ID', 'Domain'],
         [
             [
                 1,
