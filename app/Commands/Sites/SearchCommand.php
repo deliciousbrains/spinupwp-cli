@@ -118,7 +118,8 @@ class SearchCommand extends Sites
     {
         return $sites->filter(function ($site) {
             return Str::contains($site['Domain'], $this->keyword, true) ||
-                Str::contains($site['Site User'], $this->keyword, true);
+                Str::contains($site['Site User'], $this->keyword, true) ||
+                Str::contains($site['Site ID'], $this->keyword, true);
         })->values()->map(function ($site, $index) {
             return array_merge(['Match' => $index + 1], $site);
         });

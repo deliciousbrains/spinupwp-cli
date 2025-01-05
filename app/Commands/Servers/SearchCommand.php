@@ -32,7 +32,7 @@ class SearchCommand extends Servers
         }
 
         $servers->transform(
-            fn($server) => $this->specifyFields($server, [
+            fn ($server) => $this->specifyFields($server, [
                 'id',
                 'name',
                 'ip_address',
@@ -40,7 +40,7 @@ class SearchCommand extends Servers
                 'database.server',
             ]));
 
-        if (!in_array($this->displayFormat(), self::SUPPORTED_FORMATS)) {
+        if (! in_array($this->displayFormat(), self::SUPPORTED_FORMATS)) {
             $this->info("Format not supported");
             return self::FAILURE;
         }
@@ -52,7 +52,7 @@ class SearchCommand extends Servers
 
     protected function promptForSearch(Collection $servers): void
     {
-        if (!$this->keyword) {
+        if (! $this->keyword) {
             $this->keyword = $this->ask('Enter a search term');
         }
 
@@ -108,7 +108,8 @@ class SearchCommand extends Servers
     {
         return $servers->filter(function ($server) {
             return Str::contains($server['Name'], $this->keyword, true) ||
-                Str::contains($server['IP Address'], $this->keyword, true);
+                Str::contains($server['IP Address'], $this->keyword, true) ||
+                Str::contains($server['Server ID'], $this->keyword, true);
         })->values()->map(function ($site, $index) {
             return array_merge(['Match' => $index + 1], $site);
         });
